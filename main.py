@@ -1,20 +1,13 @@
 from fastapi import FastAPI
-from datetime import datetime, timedelta
+from database import create_connection  # Importando a função de conexão
 import mysql.connector
 
 app = FastAPI()
 
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "",
-    "database": "sra_tlp",
-}
-
 
 @app.get("/")
 def home():
-    return {"Minha API esta no ar!"}
+    return {"Minha API está no ar!"}
 
 
 @app.get("/soma")
@@ -24,25 +17,24 @@ def soma(a: int, b: int, c: int):
 
 @app.get("/funcionarios/contratados")
 def get_funcionarios_contratados():
-    # Data de 30 dias atrás
-    data_limite = (datetime.today() - timedelta(days=30)).strftime("%Y-%m-%d")
+    # Usando a função de conexão
+    conn = create_connection()
 
-    # Conectar ao banco
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor(dictionary=True)
+    if conn:
+        cursor = conn.cursor(dictionary=True)
 
-    # Consulta SQL para pegar funcionários contratados nos últimos 30 dias
-    query = """
-    SELECT * FROM funcionario 
-    WHERE RA_ADMISSA >= %s
-    ORDER BY RA_ADMISSA DESC
-    """
+        query = """
+          SELECT * FROM sra_tlp.funcionarios 
+          WHERE STR_TO_DATE(RA_ADMISSA, '%d/%m/%Y') >= CURDATE() - INTERVAL 30 DAY
+          ORDER BY STR_TO_DATE(RA_ADMISSA, '%d/%m/%Y') ASC;
+        """
 
-    cursor.execute(query, (data_limite,))
-    resultado = cursor.fetchall()
+        cursor.execute(query)
+        resultado = cursor.fetchall()
 
-    # Fechar conexão
-    cursor.close()
-    conn.close()
+        cursor.close()
+        conn.close()
 
-    return {"funcionarios": resultado}
+        return {"funcionarios": resultado}
+    else:
+        return {"erro": "Falha na conexão com o banco de dados"}
