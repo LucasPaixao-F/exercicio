@@ -17,7 +17,6 @@ def soma(a: int, b: int, c: int):
 
 @app.get("/funcionarios/contratados")
 def get_funcionarios_contratados():
-    # Usando a função de conexão
     conn = create_connection()
 
     if conn:
@@ -34,7 +33,3 @@ def get_funcionarios_contratados():
 
         cursor.close()
         conn.close()
-
-        return {"funcionarios": resultado}
-    else:
-        return {"erro": "Falha na conexão com o banco de dados"}
